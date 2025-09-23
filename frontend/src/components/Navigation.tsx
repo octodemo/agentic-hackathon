@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 
 export default function Navigation() {
   const { isLoggedIn, isAdmin, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
+  const { state: cartState } = useCart();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   return (
@@ -68,6 +70,31 @@ export default function Navigation() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Link 
+              to="/cart"
+              className="relative p-2 rounded-full focus:outline-none transition-colors hover:bg-gray-200 hover:dark:bg-gray-700"
+              aria-label="Shopping cart"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-6 w-6 ${darkMode ? 'text-light' : 'text-gray-700'}`}
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5a1 1 0 001 1h9.2a1 1 0 001-1L15 13H7z"
+                />
+              </svg>
+              {cartState.itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem]">
+                  {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
+                </span>
+              )}
+            </Link>
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full focus:outline-none transition-colors"
