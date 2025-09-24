@@ -3,18 +3,9 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import { useCart, Product } from '../../../context/CartContext';
 
-interface Product {
-  productId: number;
-  name: string;
-  description: string;
-  price: number;
-  imgName: string;
-  sku: string;
-  unit: string;
-  supplierId: number;
-  discount?: number;
-}
+
 
 const fetchProducts = async (): Promise<Product[]> => {
   const { data } = await axios.get(`${api.baseURL}${api.endpoints.products}`);
@@ -28,6 +19,8 @@ export default function Products() {
   const [showModal, setShowModal] = useState(false);
   const { data: products, isLoading, error } = useQuery('products', fetchProducts);
   const { darkMode } = useTheme();
+  const { addItem } = useCart();
+  const [addingToCart, setAddingToCart] = useState<number | null>(null);
 
   const filteredProducts = products?.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,13 +36,22 @@ export default function Products() {
 
   const handleAddToCart = (productId: number) => {
     const quantity = quantities[productId] || 0;
-    if (quantity > 0) {
-      // TODO: Implement cart functionality
-      alert(`Added ${quantity} items to cart`);
+    const product = products?.find(p => p.productId === productId);
+    
+    if (quantity > 0 && product) {
+      setAddingToCart(productId);
+      addItem(product, quantity);
+      
+      // Reset quantity after adding to cart
       setQuantities(prev => ({
         ...prev,
         [productId]: 0
       }));
+      
+      // Show success feedback briefly
+      setTimeout(() => {
+        setAddingToCart(null);
+      }, 1000);
     }
   };
 
@@ -172,14 +174,16 @@ export default function Products() {
                         onClick={() => handleAddToCart(product.productId)}
                         className={`px-4 py-2 rounded-lg transition-colors ${
                           quantities[product.productId] 
-                            ? 'bg-primary hover:bg-accent text-white' 
+                            ? addingToCart === product.productId
+                              ? 'bg-green-500 text-white'
+                              : 'bg-primary hover:bg-accent text-white'
                             : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
                         }`}
-                        disabled={!quantities[product.productId]}
+                        disabled={!quantities[product.productId] || addingToCart === product.productId}
                         aria-label={`Add ${quantities[product.productId] || 0} ${product.name} to cart`}
                         id={`add-to-cart-${product.productId}`}
                       >
-                        Add to Cart
+                        {addingToCart === product.productId ? '✓ Added!' : 'Add to Cart'}
                       </button>
                     </div>
                   </div>
